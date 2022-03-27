@@ -4,7 +4,7 @@
 # https://docs.scrapy.org/en/latest/topics/items.html
 
 import scrapy
-from itemloaders.processors import TakeFirst, MapCompose
+from itemloaders.processors import TakeFirst, MapCompose, Join
 from w3lib.html import remove_tags
 import re
 
@@ -152,20 +152,53 @@ def extract_review_id(review_link):
     >>> extract_review_id('/ShowUserReviews-g910519-d627041-r801898967-Hotel_Murtenhof_Krone-Murten_Canton_of_Fribourg.html')
     '801898967'
     """
-    return re.findall("-r[0-9]{9}", review_link)[0][2:]
+    return re.findall('-r[0-9]{9}', review_link)[0][2:]
 
 
-def extract_helpful_vote(vote_text):
+def extract_user_helpful_vote(vote_text):
     """
-    Extract the number of helpful vote
+    Extract the number of helpful vote on user page
 
     :param vote_text: str
     :return: number of helpful vote: int
 
-    >>> extract_helpful_vote('1 "Hilfreich"-Wertung')
+    >>> extract_user_helpful_vote('1 "Hilfreich"-Wertung')
     1
     """
     return int(vote_text[0])
+
+
+def extract_user_review_helpful_vote(helpful_vote):
+    """
+    Extract the number of helpful vote on user review page
+
+    :param helpful_vote: str
+    :return: number: int
+
+    >>> extract_user_review_helpful_vote('1 \xa0')
+    1
+    """
+    return int(helpful_vote[0])
+
+def extract_hotel_helpful_vote(review_helpful):
+    """
+    Extract the number of helpful vote on hotel page
+    If the string contains only one number, it is the number of reviews,
+    if it contains two numbers, the second number is the number of helpful reviews.
+
+    :param review_helpful: str
+    :return: helpful vote: int
+
+    >>> extract_hotel_helpful_vote('45')
+    0
+
+    >>> extract_hotel_helpful_vote('15 3')
+    3
+    """
+    if ' ' in review_helpful:
+        return int(re.findall(' [0-9]+', review_helpful)[0][1:])
+    else:
+        return int(0)
 
 
 class HotelItem(scrapy.Item):
@@ -185,7 +218,7 @@ class HotelReviewItem(scrapy.Item):
     username_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_username_id),
                                output_processor=TakeFirst())
     review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags),
-                                       output_processor=TakeFirst())  # TODO If the second element doesn't exist, it shouldn't take the first
+                                       output_processor=Join())
     review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
                                output_processor=TakeFirst())
     date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay),
@@ -195,23 +228,46 @@ class HotelReviewItem(scrapy.Item):
     review_title = scrapy.Field(input_processor=MapCompose(remove_tags),
                                 output_processor=TakeFirst())
     review_text = scrapy.Field(input_processor=MapCompose(remove_tags),
-                               output_processor=TakeFirst())
+                               output_processor=Join())
 
 
 class UserReviewItem(scrapy.Item):
-    username_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_username_id),
+    username_id = scrapy.Field(input_processor=MapCompose(remove_tags),
                                output_processor=TakeFirst())
     review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
                              output_processor=TakeFirst())
-    review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags, extract_helpful_vote),
+    review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_review_helpful_vote),
                                        output_processor=TakeFirst())
     review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
                                output_processor=TakeFirst())
+    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, remove_unnecessary_whitespace),
+                                output_processor=Join())
     review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
                                 output_processor=TakeFirst())
-    hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-                               output_processor=TakeFirst())
+    # hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
+    #                            output_processor=TakeFirst())
     review_title = scrapy.Field(input_processor=MapCompose(remove_tags),
                                 output_processor=TakeFirst())
     review_text = scrapy.Field(input_processor=MapCompose(remove_tags),
                                output_processor=TakeFirst())
+
+
+# class UserReviewItem(scrapy.Item):
+#     username_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_username_id),
+#                                output_processor=TakeFirst())
+#     review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
+#                              output_processor=TakeFirst())
+#     review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_helpful_vote),
+#                                        output_processor=TakeFirst())
+#     review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
+#                                output_processor=TakeFirst())
+#     date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags),
+#                                 output_processor=Join())
+#     review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
+#                                 output_processor=TakeFirst())
+#     hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
+#                                output_processor=TakeFirst())
+#     review_title = scrapy.Field(input_processor=MapCompose(remove_tags),
+#                                 output_processor=TakeFirst())
+#     review_text = scrapy.Field(input_processor=MapCompose(remove_tags),
+#                                output_processor=TakeFirst())
