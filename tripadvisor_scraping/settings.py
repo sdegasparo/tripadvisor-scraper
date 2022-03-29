@@ -29,11 +29,22 @@ DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
 
 HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
 
+# Scraping Bee Setup
+
+SCRAPINGBEE_API_KEY = 'CH2XY25MMBV222L1YDBGRUYVSTM2R5U4GQXR2M75U5OL443UA9CH7NSHB7Q94YM7EUDG3ANGKKYAQPN7'
+
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy_scrapingbee.ScrapingBeeMiddleware': 725,
+}
+
+# Set to 99 in Production
+CONCURRENT_REQUESTS = 20
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'tripadvisor_scraping (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32

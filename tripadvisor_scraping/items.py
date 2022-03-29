@@ -67,6 +67,9 @@ def extract_review_date(review_date):
     Seems not to exists anymore
     >>> extract_review_date('18. März')
     '3 2022'
+
+    >>> extract_review_date('18. März')
+    '3 2022'
     """
     date = review_date.replace(' hat im ', '').replace(' eine Bewertung geschrieben.', '')
     if date[0].isdigit():
@@ -81,14 +84,14 @@ def extract_review_date(review_date):
     return date
 
 
-def extract_date_of_stay(date_of_stay):
+def extract_date_of_stay_review(date_of_stay):
     """
     Extract the date out of the date of stay string
 
     :param date_of_stay: str
     :return: str with month and year
 
-    >>> extract_date_of_stay(' September 2020')
+    >>> extract_date_of_stay_review(' September 2020')
     '9 2020'
     """
     date = date_of_stay[1:]
@@ -97,6 +100,40 @@ def extract_date_of_stay(date_of_stay):
 
     return str(month_to_digit(month)) + str(year)
 
+def extract_date_of_stay(date_of_stay):
+    """
+    Extract the date out of the date of stay string
+
+    :param date_of_stay: str
+    :return: str with month and year
+
+    >>> extract_date_of_stay(' August 2017 September 2017 August 2017 Juli 2017 Juli 2017 Oktober 2016')
+    '8 2017'
+    """
+    date = re.findall("^\s[A-Z][a-zA-Z]+\s[0-9]+", date_of_stay)[0]
+    month = date[1:-5]
+    year = date[-4:]
+    date = str(month_to_digit(month)) + " " + str(year)
+
+    return date
+
+# TODO Funktionert nicht wie gewünscht
+def extract_date_of_stay_array(date_of_stay):
+    """
+    Extract the date out of the date of stay array
+
+    :param date_of_stay: str
+    :return: str with month and year
+
+    >>> extract_date_of_stay_array([' Oktober 2021', ' Oktober 2021', ' September 2021', ' September 2020', ' März 2020', ' Februar 2020'])
+    '10 2021'
+    """
+    date = date_of_stay[0][1:]
+    month = date[:-5]
+    year = date[-4:]
+    date = str(month_to_digit(month)) + " " + str(year)
+
+    return date
 
 def extract_score(score_class):
     """
@@ -151,8 +188,14 @@ def extract_review_id(review_link):
 
     >>> extract_review_id('/ShowUserReviews-g910519-d627041-r801898967-Hotel_Murtenhof_Krone-Murten_Canton_of_Fribourg.html')
     '801898967'
+
+    >>> extract_review_id('/Hotel_Review-g293891-d1513579-Reviews-Hotel_Crown-Pokhara_Gandaki_Zone_Western_Region.html')
+    '/Hotel_Review-g293891-d1513579-Reviews-Hotel_Crown-Pokhara_Gandaki_Zone_Western_Region.html'
     """
-    return re.findall('-r[0-9]{9}', review_link)[0][2:]
+    if '/ShowUserReviews' in review_link:
+        return re.findall("-r[0-9]{9}", review_link)[0][2:]
+    else:
+        return review_link
 
 
 def extract_user_helpful_vote(vote_text):
@@ -180,6 +223,7 @@ def extract_user_review_helpful_vote(helpful_vote):
     """
     return int(helpful_vote[0])
 
+
 def extract_hotel_helpful_vote(review_helpful):
     """
     Extract the number of helpful vote on hotel page
@@ -201,8 +245,24 @@ def extract_hotel_helpful_vote(review_helpful):
         return int(0)
 
 
+def extract_hotel_id(review_link):
+    """
+    Extract the hotel id from review link
+
+    :param review_link: str
+    :return: hotel_id: str
+
+    >>> extract_hotel_id('/ShowUserReviews-g910519-d627041-r801898967-Hotel_Murtenhof_Krone-Murten_Canton_of_Fribourg.html')
+    '627041'
+
+    >>> extract_hotel_id('/Hotel_Review-g910519-d19778035-Reviews-Zimmerei-Murten_Canton_of_Fribourg.html')
+    '19778035'
+    """
+    return re.findall("-d[0-9]+-", review_link)[0][2:-1]
+
+
 class HotelItem(scrapy.Item):
-    hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags),
+    hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
                             output_processor=TakeFirst())
     hotel_name = scrapy.Field(input_processor=MapCompose(remove_tags, remove_unnecessary_whitespace),
                               output_processor=TakeFirst())
@@ -211,8 +271,6 @@ class HotelItem(scrapy.Item):
 
 
 class HotelReviewItem(scrapy.Item):
-    # hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags), output_processor=TakeFirst())
-    # hotel_name = scrapy.Field(input_processor=MapCompose(remove_tags, remove_whitespace), output_processor=TakeFirst())
     review_id = scrapy.Field(input_processor=MapCompose(remove_tags),
                              output_processor=TakeFirst())
     username_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_username_id),
@@ -221,7 +279,7 @@ class HotelReviewItem(scrapy.Item):
                                        output_processor=Join())
     review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
                                output_processor=TakeFirst())
-    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay),
+    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay_review),
                                 output_processor=TakeFirst())
     review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
                                 output_processor=TakeFirst())
@@ -231,43 +289,29 @@ class HotelReviewItem(scrapy.Item):
                                output_processor=Join())
 
 
+class UserReviewPage(scrapy.Item):
+    hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
+                            output_processor=TakeFirst())
+    # hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
+    #                            output_processor=TakeFirst())
+    review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
+                             output_processor=TakeFirst())
+
+
 class UserReviewItem(scrapy.Item):
     username_id = scrapy.Field(input_processor=MapCompose(remove_tags),
                                output_processor=TakeFirst())
-    review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
+    review_id = scrapy.Field(input_processor=MapCompose(remove_tags),
                              output_processor=TakeFirst())
     review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_review_helpful_vote),
                                        output_processor=TakeFirst())
-    review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
+    review_date = scrapy.Field(input_processor=MapCompose(remove_tags),
                                output_processor=TakeFirst())
-    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, remove_unnecessary_whitespace),
+    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay_array),
                                 output_processor=Join())
     review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
                                 output_processor=TakeFirst())
-    # hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-    #                            output_processor=TakeFirst())
     review_title = scrapy.Field(input_processor=MapCompose(remove_tags),
                                 output_processor=TakeFirst())
     review_text = scrapy.Field(input_processor=MapCompose(remove_tags),
                                output_processor=TakeFirst())
-
-
-# class UserReviewItem(scrapy.Item):
-#     username_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_username_id),
-#                                output_processor=TakeFirst())
-#     review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
-#                              output_processor=TakeFirst())
-#     review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_helpful_vote),
-#                                        output_processor=TakeFirst())
-#     review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
-#                                output_processor=TakeFirst())
-#     date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags),
-#                                 output_processor=Join())
-#     review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-#                                 output_processor=TakeFirst())
-#     hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-#                                output_processor=TakeFirst())
-#     review_title = scrapy.Field(input_processor=MapCompose(remove_tags),
-#                                 output_processor=TakeFirst())
-#     review_text = scrapy.Field(input_processor=MapCompose(remove_tags),
-#                                output_processor=TakeFirst())
