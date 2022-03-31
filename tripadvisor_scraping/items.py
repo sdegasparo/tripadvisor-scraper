@@ -165,7 +165,6 @@ def remove_unnecessary_whitespace(text):
     return text.strip()
 
 
-# Link is /Profile/USERNAME
 def extract_username_id(profile_link):
     """
     Extract the real username from the profile link
@@ -292,8 +291,6 @@ class HotelReviewItem(scrapy.Item):
 class UserReviewPage(scrapy.Item):
     hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
                             output_processor=TakeFirst())
-    # hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-    #                            output_processor=TakeFirst())
     review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
                              output_processor=TakeFirst())
 

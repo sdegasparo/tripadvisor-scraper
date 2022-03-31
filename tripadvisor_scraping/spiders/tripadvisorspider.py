@@ -8,8 +8,12 @@ from scrapy_scrapingbee import ScrapingBeeSpider, ScrapingBeeRequest
 class TripadvisorSpider(ScrapingBeeSpider):
 # class TripadvisorSpider(scrapy.Spider):
     name = 'tripadvisor'
-    # start_urls = ['https://www.tripadvisor.ch/Hotel_Review-g910519-d1513327-Reviews-Hotel_Murten-Murten_Canton_of_Fribourg.html']
+
+    # Test URL Murten
     start_urls = ['https://www.tripadvisor.ch/Hotels-g910519-Murten_Canton_of_Fribourg-Hotels.html']
+
+    # Prod URL Switzerland
+    # start_urls = ['https://www.tripadvisor.ch/Hotels-g910519-Murten_Canton_of_Fribourg-Hotels.html']
 
     def parse(self, response):
         for hotel in response.css('div.prw_rup.prw_meta_hsx_responsive_listing.ui_section.listItem'):
@@ -65,7 +69,6 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
                     urp = ItemLoader(item=UserReviewPage(), selector=user_review)
                     urp.add_css('hotel_id', 'div.bCnPW.Pd a::attr(href)')
-                    # urp.add_css('hotel_score', 'div.ui_poi_review_rating span.ui_bubble_rating::attr(class)')
                     urp.add_css('review_id', 'div.bCnPW.Pd a::attr(href)')
                     yield urp.load_item()
 
