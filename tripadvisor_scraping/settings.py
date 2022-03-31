@@ -7,6 +7,9 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import os
+from dotenv import load_dotenv
+
 BOT_NAME = 'tripadvisor_scraping'
 
 SPIDER_MODULES = ['tripadvisor_scraping.spiders']
@@ -31,7 +34,8 @@ HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
 
 # Scraping Bee Setup
 
-SCRAPINGBEE_API_KEY = 'CH2XY25MMBV222L1YDBGRUYVSTM2R5U4GQXR2M75U5OL443UA9CH7NSHB7Q94YM7EUDG3ANGKKYAQPN7'
+load_dotenv()
+SCRAPINGBEE_API_KEY = os.getenv('SCRAPINGBEE_API_KEY')
 
 DOWNLOADER_MIDDLEWARES = {
     'scrapy_scrapingbee.ScrapingBeeMiddleware': 725,
