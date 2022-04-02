@@ -47,7 +47,6 @@ def month_to_digit(month):
             return "12"
 
 
-# TODO Why does it sometimes fail? Propably it comes as a String?
 def extract_review_date(review_date):
     """
     Extract the date out of the review date
@@ -58,24 +57,9 @@ def extract_review_date(review_date):
     >>> extract_review_date('29. Juni 2011')
     '29.6.2011'
 
-    >>> extract_review_date('6. August 2019')
-    '6.8.2019'
-
-    >>> extract_review_date("['27. September 2020', '2. August 2020', '23. Mai 2020', '4. März 2020', '1. Februar 2020', '12. Januar 2020']")
-    '27.9.2020'
-
-    >>> extract_review_date("['23. März 2021', '18. März 2020', '23. Februar 2020', '13. Februar 2020', '28. Januar 2020', '12. September 2019']")
-    '23.3.2021'
+    >>> extract_review_date('6. März 2019')
+    '6.3.2019'
     """
-
-    # print("*********************************", review_date)
-
-    # If it has several dates delete the brackets ['
-    if '[' in review_date:
-        # print('Array')
-        review_date = review_date[2:]
-
-    # print(re.findall('[A-Z][a-z]+', review_date))
     day = re.findall('^[0-9]+', review_date)[0]
     month = re.findall('[A-Z][a-z]+|März', review_date)[0]
     year = re.findall('[0-9]{4}', review_date)[0]
@@ -190,7 +174,7 @@ class HotelItem(scrapy.Item):
                                output_processor=TakeFirst())
 
 
-class UserReviewPage(scrapy.Item):
+class HotelIdReviewIdItem(scrapy.Item):
     hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
                             output_processor=TakeFirst())
     review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),

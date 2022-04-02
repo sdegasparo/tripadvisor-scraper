@@ -10,5 +10,9 @@ Install the requirements `pip install -r requirements.txt`
 * `scrapy shell URL`
 * With Splash `scrapy shell` and then `fetch('http://localhost:8050/render.html?url=URL')`
 
+## Scrapingbee API-Key
+Create a `.env` file with `SCRAPINGBEE_API_KEY = 'YOUR_API_KEY'` <br>
+If you haven't a Scrapingbee API-Key you can use scrapy-splash
+
 ## Run Doctest
 `python -m doctest items.py -v`

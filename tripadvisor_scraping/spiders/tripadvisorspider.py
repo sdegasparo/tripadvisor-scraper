@@ -1,12 +1,12 @@
 import scrapy
-from tripadvisor_scraping.items import HotelItem, UserReviewItem, UserReviewPage
+from tripadvisor_scraping.items import HotelItem, HotelIdReviewIdItem, UserReviewItem
 from scrapy.loader import ItemLoader
 from scrapy_splash import SplashRequest
 from scrapy_scrapingbee import ScrapingBeeSpider, ScrapingBeeRequest
 
 
 class TripadvisorSpider(ScrapingBeeSpider):
-# class TripadvisorSpider(scrapy.Spider):
+    # class TripadvisorSpider(scrapy.Spider):
     name = 'tripadvisor'
 
     # Test URL Murten
@@ -26,16 +26,15 @@ class TripadvisorSpider(ScrapingBeeSpider):
             # Go through all hotels on this page
             hotel_link = hotel.css('div.listing_title a.property_title.prominent::attr(href)').get()
             if hotel_link is not None:
-                yield response.follow(hotel_link, callback=self.parse_hotel_review)
+                yield response.follow(hotel_link, callback=self.parse_hotel_page)
 
             # Go to next page
             next_hotel_page = response.css('a.nav.next.ui_button.primary::attr(href)').get()
             if next_hotel_page is not None:
                 yield response.follow(next_hotel_page, callback=self.parse)
 
-    def parse_hotel_review(self, response):
+    def parse_hotel_page(self, response):
         for hotel_review in response.css('div[data-test-target=reviews-tab] div.cWwQK.MC.R2.Gi.z.Z.BB.dXjiy'):
-
             # Go to user page
             user_link = hotel_review.css('div.bcaHz a.ui_header_link.bPvDb::attr(href)').get()
             url = 'https://www.tripadvisor.ch' + str(user_link)
@@ -45,7 +44,7 @@ class TripadvisorSpider(ScrapingBeeSpider):
         # Go to next review page
         next_hotel_review_page = response.css('a.ui_button.nav.next.primary::attr(href)').get()
         if next_hotel_review_page is not None:
-            yield response.follow(next_hotel_review_page, callback=self.parse_hotel_review)
+            yield response.follow(next_hotel_review_page, callback=self.parse_hotel_page)
 
     def parse_user_page(self, response):
         for user_review in response.css('div.eSYSx.ui_card.section'):
@@ -54,10 +53,10 @@ class TripadvisorSpider(ScrapingBeeSpider):
             if ui_icon_class is not None:
                 if 'hotels' in ui_icon_class:
 
-                    urp = ItemLoader(item=UserReviewPage(), selector=user_review)
-                    urp.add_css('hotel_id', 'div.bCnPW.Pd a::attr(href)')
-                    urp.add_css('review_id', 'div.bCnPW.Pd a::attr(href)')
-                    yield urp.load_item()
+                    hr = ItemLoader(item=HotelIdReviewIdItem(), selector=user_review)
+                    hr.add_css('hotel_id', 'div.bCnPW.Pd a::attr(href)')
+                    hr.add_css('review_id', 'div.bCnPW.Pd a::attr(href)')
+                    yield hr.load_item()
 
                     review_page = user_review.css('div.bCnPW.Pd a::attr(href)').get()
                     url = 'https://www.tripadvisor.ch' + str(review_page)

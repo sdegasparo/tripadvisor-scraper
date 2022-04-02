@@ -41,8 +41,7 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy_scrapingbee.ScrapingBeeMiddleware': 725,
 }
 
-# Set to 99 in Production
-CONCURRENT_REQUESTS = 20
+CONCURRENT_REQUESTS = 99
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'tripadvisor_scraping (+http://www.yourdomain.com)'
