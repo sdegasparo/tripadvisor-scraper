@@ -47,58 +47,41 @@ def month_to_digit(month):
             return "12"
 
 
+# TODO Why does it sometimes fail? Propably it comes as a String?
 def extract_review_date(review_date):
     """
-    Extract the date out of the review date string
+    Extract the date out of the review date
 
     :param review_date: str
-    :return: str with month and year
+    :return: str with day, month and year
 
-    >>> extract_review_date(' hat im Juni 2019 eine Bewertung geschrieben.')
-    '6 2019'
+    >>> extract_review_date('29. Juni 2011')
+    '29.6.2011'
 
-    Seems not to exists anymore
-    >>> extract_review_date(' hat im 3. März eine Bewertung geschrieben.')
-    '3 2022'
+    >>> extract_review_date('6. August 2019')
+    '6.8.2019'
 
-    >>> extract_review_date('Sept. 2019')
-    '9 2019'
+    >>> extract_review_date("['27. September 2020', '2. August 2020', '23. Mai 2020', '4. März 2020', '1. Februar 2020', '12. Januar 2020']")
+    '27.9.2020'
 
-    Seems not to exists anymore
-    >>> extract_review_date('18. März')
-    '3 2022'
-
-    >>> extract_review_date('18. März')
-    '3 2022'
+    >>> extract_review_date("['23. März 2021', '18. März 2020', '23. Februar 2020', '13. Februar 2020', '28. Januar 2020', '12. September 2019']")
+    '23.3.2021'
     """
-    date = review_date.replace(' hat im ', '').replace(' eine Bewertung geschrieben.', '')
-    if date[0].isdigit():
-        date = re.sub(r'[0-9+]', '', date).replace('. ', '')
-        date = month_to_digit(date)
-        date = str(date) + ' 2022'
-    else:
-        year = date[-4:]
-        month = date[:-5]
-        date = str(month_to_digit(month)) + " " + str(year)
 
-    return date
+    # print("*********************************", review_date)
 
+    # If it has several dates delete the brackets ['
+    if '[' in review_date:
+        # print('Array')
+        review_date = review_date[2:]
 
-def extract_date_of_stay_review(date_of_stay):
-    """
-    Extract the date out of the date of stay string
+    # print(re.findall('[A-Z][a-z]+', review_date))
+    day = re.findall('^[0-9]+', review_date)[0]
+    month = re.findall('[A-Z][a-z]+|März', review_date)[0]
+    year = re.findall('[0-9]{4}', review_date)[0]
 
-    :param date_of_stay: str
-    :return: str with month and year
+    return str(day) + '.' + str(month_to_digit(month)) + "." + str(year)
 
-    >>> extract_date_of_stay_review(' September 2020')
-    '9 2020'
-    """
-    date = date_of_stay[1:]
-    year = date[-5:]
-    month = date[:-5]
-
-    return str(month_to_digit(month)) + str(year)
 
 def extract_date_of_stay(date_of_stay):
     """
@@ -107,33 +90,15 @@ def extract_date_of_stay(date_of_stay):
     :param date_of_stay: str
     :return: str with month and year
 
-    >>> extract_date_of_stay(' August 2017 September 2017 August 2017 Juli 2017 Juli 2017 Oktober 2016')
-    '8 2017'
+    >>> extract_date_of_stay(' September 2020')
+    '9.2020'
     """
-    date = re.findall("^\s[A-Z][a-zA-Z]+\s[0-9]+", date_of_stay)[0]
-    month = date[1:-5]
+    date = date_of_stay[1:]
     year = date[-4:]
-    date = str(month_to_digit(month)) + " " + str(year)
-
-    return date
-
-# TODO Funktionert nicht wie gewünscht
-def extract_date_of_stay_array(date_of_stay):
-    """
-    Extract the date out of the date of stay array
-
-    :param date_of_stay: str
-    :return: str with month and year
-
-    >>> extract_date_of_stay_array([' Oktober 2021', ' Oktober 2021', ' September 2021', ' September 2020', ' März 2020', ' Februar 2020'])
-    '10 2021'
-    """
-    date = date_of_stay[0][1:]
     month = date[:-5]
-    year = date[-4:]
-    date = str(month_to_digit(month)) + " " + str(year)
 
-    return date
+    return str(month_to_digit(month)) + '.' + str(year)
+
 
 def extract_score(score_class):
     """
@@ -165,19 +130,6 @@ def remove_unnecessary_whitespace(text):
     return text.strip()
 
 
-def extract_username_id(profile_link):
-    """
-    Extract the real username from the profile link
-
-    :param profile_link: str
-    :return: username_id: str
-
-    >>> extract_username_id('/Profile/Geniessender')
-    'Geniessender'
-    """
-    return profile_link.replace('/Profile/', '')
-
-
 def extract_review_id(review_link):
     """
     Extract review id from review link
@@ -190,24 +142,14 @@ def extract_review_id(review_link):
 
     >>> extract_review_id('/Hotel_Review-g293891-d1513579-Reviews-Hotel_Crown-Pokhara_Gandaki_Zone_Western_Region.html')
     '/Hotel_Review-g293891-d1513579-Reviews-Hotel_Crown-Pokhara_Gandaki_Zone_Western_Region.html'
+
+    >>> extract_review_id('/ShowUserReviews-g198829-d253607-r29693415-Hotel_Krone_Hotel_de_la_Couronne-Meyriez_Canton_of_Fribourg.html')
+    '29693415'
     """
     if '/ShowUserReviews' in review_link:
-        return re.findall("-r[0-9]{9}", review_link)[0][2:]
+        return re.findall('-r[0-9]{7,10}-', review_link)[0][2:-1]
     else:
         return review_link
-
-
-def extract_user_helpful_vote(vote_text):
-    """
-    Extract the number of helpful vote on user page
-
-    :param vote_text: str
-    :return: number of helpful vote: int
-
-    >>> extract_user_helpful_vote('1 "Hilfreich"-Wertung')
-    1
-    """
-    return int(vote_text[0])
 
 
 def extract_user_review_helpful_vote(helpful_vote):
@@ -223,27 +165,6 @@ def extract_user_review_helpful_vote(helpful_vote):
     return int(helpful_vote[0])
 
 
-def extract_hotel_helpful_vote(review_helpful):
-    """
-    Extract the number of helpful vote on hotel page
-    If the string contains only one number, it is the number of reviews,
-    if it contains two numbers, the second number is the number of helpful reviews.
-
-    :param review_helpful: str
-    :return: helpful vote: int
-
-    >>> extract_hotel_helpful_vote('45')
-    0
-
-    >>> extract_hotel_helpful_vote('15 3')
-    3
-    """
-    if ' ' in review_helpful:
-        return int(re.findall(' [0-9]+', review_helpful)[0][1:])
-    else:
-        return int(0)
-
-
 def extract_hotel_id(review_link):
     """
     Extract the hotel id from review link
@@ -257,7 +178,7 @@ def extract_hotel_id(review_link):
     >>> extract_hotel_id('/Hotel_Review-g910519-d19778035-Reviews-Zimmerei-Murten_Canton_of_Fribourg.html')
     '19778035'
     """
-    return re.findall("-d[0-9]+-", review_link)[0][2:-1]
+    return re.findall('-d[0-9]+-', review_link)[0][2:-1]
 
 
 class HotelItem(scrapy.Item):
@@ -267,25 +188,6 @@ class HotelItem(scrapy.Item):
                               output_processor=TakeFirst())
     hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
                                output_processor=TakeFirst())
-
-
-class HotelReviewItem(scrapy.Item):
-    review_id = scrapy.Field(input_processor=MapCompose(remove_tags),
-                             output_processor=TakeFirst())
-    username_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_username_id),
-                               output_processor=TakeFirst())
-    review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags),
-                                       output_processor=Join())
-    review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
-                               output_processor=TakeFirst())
-    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay_review),
-                                output_processor=TakeFirst())
-    review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-                                output_processor=TakeFirst())
-    review_title = scrapy.Field(input_processor=MapCompose(remove_tags),
-                                output_processor=TakeFirst())
-    review_text = scrapy.Field(input_processor=MapCompose(remove_tags),
-                               output_processor=Join())
 
 
 class UserReviewPage(scrapy.Item):
@@ -302,10 +204,10 @@ class UserReviewItem(scrapy.Item):
                              output_processor=TakeFirst())
     review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_review_helpful_vote),
                                        output_processor=TakeFirst())
-    review_date = scrapy.Field(input_processor=MapCompose(remove_tags),
+    review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
                                output_processor=TakeFirst())
-    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay_array),
-                                output_processor=Join())
+    date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay),
+                                output_processor=TakeFirst())
     review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
                                 output_processor=TakeFirst())
     review_title = scrapy.Field(input_processor=MapCompose(remove_tags),

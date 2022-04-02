@@ -1,5 +1,5 @@
 import scrapy
-from tripadvisor_scraping.items import HotelItem, HotelReviewItem, UserReviewItem, UserReviewPage
+from tripadvisor_scraping.items import HotelItem, UserReviewItem, UserReviewPage
 from scrapy.loader import ItemLoader
 from scrapy_splash import SplashRequest
 from scrapy_scrapingbee import ScrapingBeeSpider, ScrapingBeeRequest
@@ -35,19 +35,6 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     def parse_hotel_review(self, response):
         for hotel_review in response.css('div[data-test-target=reviews-tab] div.cWwQK.MC.R2.Gi.z.Z.BB.dXjiy'):
-            # TODO Maybe delete HotelReviewItem, propably don't need it
-
-            # hr = ItemLoader(item=HotelReviewItem(), selector=hotel_review)
-            # hr.add_css('review_id', 'div.cqoFv._T::attr(data-reviewid)')
-            # hr.add_css('username_id', 'div.bcaHz a.ui_header_link.bPvDb::attr(href)')
-            # # hr.add_css('review_helpful_vote', 'span.eUTJT:last-child span.ckXjS::text')
-            # hr.add_css('review_helpful_vote', 'span.eUTJT span.ckXjS::text')
-            # hr.add_css('review_date', 'div.bcaHz span::text')
-            # hr.add_css('date_of_stay', 'span.euPKI._R.Me.S4.H3::text')
-            # hr.add_css('review_score', 'span.ui_bubble_rating::attr(class)')
-            # hr.add_css('review_title', 'a.fCitC span::text')
-            # hr.add_css('review_text', 'q.XllAv.H4._a span::text')
-            # yield hr.load_item()
 
             # Go to user page
             user_link = hotel_review.css('div.bcaHz a.ui_header_link.bPvDb::attr(href)').get()
