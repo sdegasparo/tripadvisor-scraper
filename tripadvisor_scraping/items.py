@@ -165,6 +165,13 @@ def extract_hotel_id(review_link):
     return re.findall('-d[0-9]+-', review_link)[0][2:-1]
 
 
+class DefaultValuesPipeline(object):
+
+    def process_item(self, item, spider):
+        item.setdefault('review_helpful_vote', 0)
+        return item
+
+
 class HotelItem(scrapy.Item):
     hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
                             output_processor=TakeFirst())

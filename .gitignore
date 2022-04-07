@@ -130,3 +130,6 @@ dmypy.json
 
 # json files
 *.json
+
+# Selenium test file
+click_user.py
