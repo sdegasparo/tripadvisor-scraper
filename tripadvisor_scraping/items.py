@@ -5,6 +5,8 @@
 
 import scrapy
 from itemloaders.processors import TakeFirst, MapCompose, Join
+from dataclasses import dataclass, field
+from typing import Optional
 from w3lib.html import remove_tags
 import re
 
@@ -152,19 +154,6 @@ def extract_review_id(review_link):
         return review_link
 
 
-def extract_user_review_helpful_vote(helpful_vote):
-    """
-    Extract the number of helpful vote on user review page
-
-    :param helpful_vote: str
-    :return: number: int
-
-    >>> extract_user_review_helpful_vote('1 \xa0')
-    1
-    """
-    return int(helpful_vote[0])
-
-
 def extract_hotel_id(review_link):
     """
     Extract the hotel id from review link
@@ -211,7 +200,7 @@ class UserReviewItem(scrapy.Item):
                                output_processor=TakeFirst())
     review_id = scrapy.Field(input_processor=MapCompose(remove_tags),
                              output_processor=TakeFirst())
-    review_helpful_vote = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_review_helpful_vote),
+    review_helpful_vote = scrapy.Field(input_processor=MapCompose(),
                                        output_processor=TakeFirst())
     review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
                                output_processor=TakeFirst())

@@ -126,13 +126,19 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     def parse_user_review(self, response):
         user_review = response.css('div.review-container')
+        helpful_vote = user_review.css('div.helpful span.helpful_text span.numHelp::text').get()
         ur = ItemLoader(item=UserReviewItem(), selector=user_review)
         ur.add_css('username_id', 'div.member_info div.info_text div::text')
         ur.add_css('review_id', 'div.reviewSelector::attr(data-reviewid)')
-        ur.add_css('review_helpful_vote', 'div.helpful span.helpful_text span.numHelp::text')
         ur.add_css('review_date', 'span.ratingDate::attr(title)')
         ur.add_css('date_of_stay', 'div.prw_rup.prw_reviews_stay_date_hsx::text')
         ur.add_css('review_score', 'span.ui_bubble_rating::attr(class)')
         ur.add_css('review_title', 'h1.title::text')
         ur.add_css('review_text', 'div.prw_rup.prw_reviews_resp_sur_review_text span.fullText::text')
+
+        if helpful_vote is not None:
+            ur.add_value('review_helpful_vote', int(helpful_vote[0]))
+        else:
+            ur.add_value('review_helpful_vote', int(0))
+
         yield ur.load_item()
