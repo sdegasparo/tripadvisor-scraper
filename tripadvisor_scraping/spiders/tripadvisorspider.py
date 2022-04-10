@@ -4,6 +4,7 @@ from scrapy.loader import ItemLoader
 from scrapy_splash import SplashRequest
 from scrapy_scrapingbee import ScrapingBeeSpider, ScrapingBeeRequest
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 import time
@@ -19,8 +20,16 @@ class TripadvisorSpider(ScrapingBeeSpider):
     # Prod URL Switzerland
     # start_urls = ['https://www.tripadvisor.ch/Hotels-g910519-Murten_Canton_of_Fribourg-Hotels.html']
 
-    @staticmethod
-    def load_more_reviews(url):
+    def __init__(self, fmt, datefmt, *args, **kwargs):
+        super().__init__(fmt, datefmt, *args, **kwargs)
+        options = Options()
+        options.headless = True
+        self.driver = webdriver.Firefox(options=options)
+
+    def __del__(self):
+        self.driver.quit()
+
+    def load_more_reviews(self, url):
         """
         Use Selenium to click on load more button.
         Scroll to the bottom of the page to load more reviews, until all reviews are loaded
@@ -28,26 +37,24 @@ class TripadvisorSpider(ScrapingBeeSpider):
         :param url: str
         :return: user_reviews: scrapy response
         """
-        driver = webdriver.Firefox()
-        driver.get(url)
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        driver.find_element(by=By.CSS_SELECTOR, value='div#content div.cGWLI.Mh.f.j button').click()
+        self.driver.get(url)
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        self.driver.find_element(by=By.CSS_SELECTOR, value='div#content div.cGWLI.Mh.f.j button').click()
 
-        previous_height = driver.execute_script('return document.body.scrollHeight')
+        previous_height = self.driver.execute_script('return document.body.scrollHeight')
         # Scroll to the bottom of the page to load more reviews, until all reviews are loaded
         while True:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(1)
-            new_height = driver.execute_script('return document.body.scrollHeight')
+            new_height = self.driver.execute_script('return document.body.scrollHeight')
             if new_height == previous_height:
                 break
             else:
                 previous_height = new_height
 
         # Transform the page HTML into a Scrapy response
-        response = scrapy.Selector(text=driver.page_source.encode('utf-8'))
+        response = scrapy.Selector(text=self.driver.page_source.encode('utf-8'))
         user_reviews = response.css('div.eSYSx.ui_card.section')
-        driver.close()
 
         return user_reviews
 

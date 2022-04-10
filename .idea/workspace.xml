@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="d01b8d19-a83c-4f34-9802-8c4438e88d5f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tripadvisor_scraping/items.py" beforeDir="false" afterPath="$PROJECT_DIR$/tripadvisor_scraping/items.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tripadvisor_scraping/pipelines.py" beforeDir="false" afterPath="$PROJECT_DIR$/tripadvisor_scraping/pipelines.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tripadvisor_scraping/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tripadvisor_scraping/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tripadvisor_scraping/spiders/tripadvisorspider.py" beforeDir="false" afterPath="$PROJECT_DIR$/tripadvisor_scraping/spiders/tripadvisorspider.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
