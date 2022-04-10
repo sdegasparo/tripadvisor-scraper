@@ -84,6 +84,22 @@ def extract_date_of_stay(date_of_stay):
     return str(month_to_digit(month)) + '.' + str(year)
 
 
+def extract_user_register_date(user_register_date):
+    """
+
+    :param user_register_date: str
+    :return: str with month and year
+
+    >>> extract_user_register_date('Mitglied seit Juni 2015')
+    '6.2015'
+    """
+    date = user_register_date.replace('Mitglied seit ', '')
+    month = date[:-5]
+    year = date[-4:]
+
+    return str(month_to_digit(month)) + '.' + str(year)
+
+
 def extract_score(score_class):
     """
     Extract the score out of the class bubble
@@ -165,13 +181,6 @@ def extract_hotel_id(review_link):
     return re.findall('-d[0-9]+-', review_link)[0][2:-1]
 
 
-class DefaultValuesPipeline(object):
-
-    def process_item(self, item, spider):
-        item.setdefault('review_helpful_vote', 0)
-        return item
-
-
 class HotelItem(scrapy.Item):
     hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
                             output_processor=TakeFirst())
@@ -186,6 +195,15 @@ class HotelIdReviewIdItem(scrapy.Item):
                             output_processor=TakeFirst())
     review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
                              output_processor=TakeFirst())
+
+
+class UserItem(scrapy.Item):
+    username_id = scrapy.Field(input_processor=MapCompose(remove_tags),
+                               output_processor=TakeFirst())
+    user_location = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                 output_processor=TakeFirst())
+    user_register_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_register_date),
+                                      output_processor=TakeFirst())
 
 
 class UserReviewItem(scrapy.Item):
