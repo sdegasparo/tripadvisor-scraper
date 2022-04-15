@@ -61,9 +61,9 @@ class TripadvisorSpider(ScrapingBeeSpider):
     def parse(self, response):
         for hotel in response.css('div.prw_rup.prw_meta_hsx_responsive_listing.ui_section.listItem'):
             h = ItemLoader(item=HotelItem(), selector=hotel)
-            h.add_css('hotel_id', 'div.listing_title a::attr(href)')
-            h.add_css('hotel_name', 'div.listing_title a.property_title.prominent::text')
-            h.add_css('hotel_score', 'a.ui_bubble_rating::attr(class)')
+            h.add_css('h_hotel_id', 'div.listing_title a::attr(href)')
+            h.add_css('h_hotel_name', 'div.listing_title a.property_title.prominent::text')
+            h.add_css('h_hotel_score', 'a.ui_bubble_rating::attr(class)')
             yield h.load_item()
 
         # Go through all hotels on this page
@@ -92,11 +92,11 @@ class TripadvisorSpider(ScrapingBeeSpider):
     def parse_user_page(self, response, url):
         username_id = response.css('div.dGTGf.f.K.MD span.mDiUf._R::text').get()
         user_info = response.css('div.duHGF.MD.ui_card.section')
-        ui = ItemLoader(item=UserItem(), selector=user_info)
-        ui.add_value('username_id', username_id)
-        ui.add_css('user_location', 'span.fIKCp._R.S4.H3.ShLyt.default::text')
-        ui.add_css('user_register_date', 'span.dspcc._R.H3::text')
-        yield ui.load_item()
+        u = ItemLoader(item=UserItem(), selector=user_info)
+        u.add_value('u_username_id', username_id)
+        u.add_css('u_user_location', 'span.fIKCp._R.S4.H3.ShLyt.default::text')
+        u.add_css('u_user_register_date', 'span.dspcc._R.H3::text')
+        yield u.load_item()
 
         # Check if it has a load more button on the user page
         load_more_button = response.css(
@@ -114,8 +114,8 @@ class TripadvisorSpider(ScrapingBeeSpider):
                 if 'hotels' in ui_icon_class:
 
                     hr = ItemLoader(item=HotelIdReviewIdItem(), selector=user_review)
-                    hr.add_css('hotel_id', 'div.bCnPW.Pd a::attr(href)')
-                    hr.add_css('review_id', 'div.bCnPW.Pd a::attr(href)')
+                    hr.add_css('hr_hotel_id', 'div.bCnPW.Pd a::attr(href)')
+                    hr.add_css('hr_review_id', 'div.bCnPW.Pd a::attr(href)')
                     yield hr.load_item()
 
                     review_page = user_review.css('div.bCnPW.Pd a::attr(href)').get()
@@ -128,13 +128,13 @@ class TripadvisorSpider(ScrapingBeeSpider):
         user_review = response.css('div.review-container')
         helpful_vote = user_review.css('div.helpful span.helpful_text span.numHelp::text').get()
         ur = ItemLoader(item=UserReviewItem(), selector=user_review)
-        ur.add_css('username_id', 'div.member_info div.info_text div::text')
-        ur.add_css('review_id', 'div.reviewSelector::attr(data-reviewid)')
-        ur.add_css('review_date', 'span.ratingDate::attr(title)')
-        ur.add_css('date_of_stay', 'div.prw_rup.prw_reviews_stay_date_hsx::text')
-        ur.add_css('review_score', 'span.ui_bubble_rating::attr(class)')
-        ur.add_css('review_title', 'h1.title::text')
-        ur.add_css('review_text', 'div.prw_rup.prw_reviews_resp_sur_review_text span.fullText::text')
+        ur.add_css('ur_username_id', 'div.member_info div.info_text div::text')
+        ur.add_css('ur_review_id', 'div.reviewSelector::attr(data-reviewid)')
+        ur.add_css('ur_review_date', 'span.ratingDate::attr(title)')
+        ur.add_css('ur_date_of_stay', 'div.prw_rup.prw_reviews_stay_date_hsx::text')
+        ur.add_css('ur_review_score', 'span.ui_bubble_rating::attr(class)')
+        ur.add_css('ur_review_title', 'h1.title::text')
+        ur.add_css('ur_review_text', 'div.prw_rup.prw_reviews_resp_sur_review_text span.fullText::text')
 
         if helpful_vote is not None:
             ur.add_value('review_helpful_vote', int(helpful_vote[0]))
