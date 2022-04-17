@@ -60,23 +60,28 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     def parse(self, response):
         for hotel in response.css('div.prw_rup.prw_meta_hsx_responsive_listing.ui_section.listItem'):
-            h = ItemLoader(item=HotelItem(), selector=hotel)
-            h.add_css('h_hotel_id', 'div.listing_title a::attr(href)')
-            h.add_css('h_hotel_name', 'div.listing_title a.property_title.prominent::text')
-            h.add_css('h_hotel_score', 'a.ui_bubble_rating::attr(class)')
-            yield h.load_item()
+            # Go through all hotels on this page
+            hotel_link = hotel.css('div.listing_title a.property_title.prominent::attr(href)').get()
+            url = 'https://www.tripadvisor.ch' + str(hotel_link)
+            if hotel_link is not None:
+                # yield response.follow(hotel_link, callback=self.parse_hotel_page)
+                yield ScrapingBeeRequest(url=url, callback=self.parse_hotel_page)
 
-        # Go through all hotels on this page
-        hotel_link = hotel.css('div.listing_title a.property_title.prominent::attr(href)').get()
-        if hotel_link is not None:
-            yield response.follow(hotel_link, callback=self.parse_hotel_page)
-
-        # Go to next hotel page
-        next_hotel_page = response.css('a.nav.next.ui_button.primary::attr(href)').get()
-        if next_hotel_page is not None:
-            yield response.follow(next_hotel_page, callback=self.parse)
+            # Go to next hotel page
+            next_hotel_page = response.css('a.nav.next.ui_button.primary::attr(href)').get()
+            if next_hotel_page is not None:
+                yield response.follow(next_hotel_page, callback=self.parse)
 
     def parse_hotel_page(self, response):
+        hotel = response.css('div.page')
+        h = ItemLoader(item=HotelItem(), selector=hotel)
+        h.add_css('h_hotel_id', 'div.badtN a::attr(href)')
+        h.add_css('h_hotel_name', 'h1.fkWsC.b.d.Pn::text')
+        h.add_css('h_hotel_score', 'span.bvcwU.P::text')
+        h.add_css('h_hotel_description', 'div.duhwe._T.bOlcm.bWqJN.Ci.dMbup div.pIRBV._T::text')
+        h.add_css('h_hotel_number_of_reviews', 'span.cdKMr.Mc._R.b::text')
+        yield h.load_item()
+
         for hotel_review in response.css('div[data-test-target=reviews-tab] div.cWwQK.MC.R2.Gi.z.Z.BB.dXjiy'):
             # Go to user page
             user_link = hotel_review.css('div.bcaHz a.ui_header_link.bPvDb::attr(href)').get()

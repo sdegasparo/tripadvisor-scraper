@@ -119,19 +119,6 @@ def extract_score(score_class):
     return float(score[-2:]) / 10
 
 
-def remove_unnecessary_whitespace(text):
-    """
-    Removes any leading spaces at the beginning and trailing spaces at the end
-
-    :param text: str
-    :return: text: str
-
-    >>> remove_unnecessary_whitespace('       Hotel Murtenhof & Krone  ')
-    'Hotel Murtenhof & Krone'
-    """
-    return text.strip()
-
-
 def extract_review_id(review_link):
     """
     Extract review id from review link
@@ -172,43 +159,47 @@ def extract_hotel_id(review_link):
 
 class HotelItem(scrapy.Item):
     h_hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
-                            output_processor=TakeFirst())
-    h_hotel_name = scrapy.Field(input_processor=MapCompose(remove_tags, remove_unnecessary_whitespace),
                               output_processor=TakeFirst())
-    h_hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-                               output_processor=TakeFirst())
+    h_hotel_name = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                output_processor=TakeFirst())
+    h_hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                 output_processor=TakeFirst())
+    h_hotel_description = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                       output_processor=TakeFirst())
+    h_hotel_number_of_reviews = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                             output_processor=TakeFirst())
 
 
 class HotelIdReviewIdItem(scrapy.Item):
     hr_hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
-                            output_processor=TakeFirst())
+                               output_processor=TakeFirst())
     hr_review_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_id),
-                             output_processor=TakeFirst())
+                                output_processor=TakeFirst())
 
 
 class UserItem(scrapy.Item):
     u_username_id = scrapy.Field(input_processor=MapCompose(remove_tags),
-                               output_processor=TakeFirst())
-    u_user_location = scrapy.Field(input_processor=MapCompose(remove_tags),
                                  output_processor=TakeFirst())
+    u_user_location = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                   output_processor=TakeFirst())
     u_user_register_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_user_register_date),
-                                      output_processor=TakeFirst())
+                                        output_processor=TakeFirst())
 
 
 class UserReviewItem(scrapy.Item):
     ur_username_id = scrapy.Field(input_processor=MapCompose(remove_tags),
-                               output_processor=TakeFirst())
+                                  output_processor=TakeFirst())
     ur_review_id = scrapy.Field(input_processor=MapCompose(remove_tags),
-                             output_processor=TakeFirst())
+                                output_processor=TakeFirst())
     ur_review_helpful_vote = scrapy.Field(input_processor=MapCompose(),
-                                       output_processor=TakeFirst())
+                                          output_processor=TakeFirst())
     ur_review_date = scrapy.Field(input_processor=MapCompose(remove_tags, extract_review_date),
-                               output_processor=TakeFirst())
+                                  output_processor=TakeFirst())
     ur_date_of_stay = scrapy.Field(input_processor=MapCompose(remove_tags, extract_date_of_stay),
-                                output_processor=TakeFirst())
+                                   output_processor=TakeFirst())
     ur_review_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
-                                output_processor=TakeFirst())
+                                   output_processor=TakeFirst())
     ur_review_title = scrapy.Field(input_processor=MapCompose(remove_tags),
-                                output_processor=TakeFirst())
+                                   output_processor=TakeFirst())
     ur_review_text = scrapy.Field(input_processor=MapCompose(remove_tags),
-                               output_processor=TakeFirst())
+                                  output_processor=TakeFirst())
