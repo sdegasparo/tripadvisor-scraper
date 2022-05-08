@@ -5,13 +5,10 @@
 
 import scrapy
 from itemloaders.processors import TakeFirst, MapCompose, Join
-from dataclasses import dataclass, field
-from typing import Optional
 from w3lib.html import remove_tags
 import re
 
 
-# Convert month text to digit
 def month_to_digit(month):
     """
     Given a month, return the digit of the month
@@ -88,6 +85,7 @@ def extract_date_of_stay(date_of_stay):
 
 def extract_user_register_date(user_register_date):
     """
+    Extract the user register date
 
     :param user_register_date: str
     :return: str with month and year
@@ -117,17 +115,6 @@ def extract_score(score_class):
     """
     score = score_class.replace('ui_bubble_rating ', '')
     return float(score[-2:]) / 10
-
-
-def remove_unnecessary_whitespace(text):
-    """
-    Removes any leading spaces at the beginning and trailing spaces at the end
-    :param text: str
-    :return: text: str
-    >>> remove_unnecessary_whitespace('       Hotel Murtenhof & Krone  ')
-    'Hotel Murtenhof & Krone'
-    """
-    return text.strip()
 
 
 def extract_review_id(review_link):
@@ -168,25 +155,15 @@ def extract_hotel_id(review_link):
     return re.findall('-d[0-9]+-', review_link)[0][2:-1]
 
 
-def remove_enumeration_hotel_name(hotel_name):
-    """
-    Remove enumeration in hotel name
-
-    :param hotel_name: str
-    :return: hotel name without enumeration: str
-
-    >>> remove_enumeration_hotel_name('23. Belvedere Swiss Quality Hotel')
-    'Belvedere Swiss Quality Hotel'
-    """
-    return re.sub(r'[0-9]+. ', '', hotel_name)
-
-
 def score_to_float(hotel_score):
     """
     Return the hotel_score as float
 
     :param hotel_score: string
     :return: hotel_score: float
+
+    >>> score_to_float('5.0')
+    5.0
     """
     return float(hotel_score)
 
