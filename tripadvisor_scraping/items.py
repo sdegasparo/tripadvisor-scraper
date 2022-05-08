@@ -181,14 +181,25 @@ def remove_enumeration_hotel_name(hotel_name):
     return re.sub(r'[0-9]+. ', '', hotel_name)
 
 
+def score_to_float(hotel_score):
+    """
+    Return the hotel_score as float
+
+    :param hotel_score: string
+    :return: hotel_score: float
+    """
+    return float(hotel_score)
+
+
 class HotelItem(scrapy.Item):
     h_hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
                               output_processor=TakeFirst())
-    h_hotel_name = scrapy.Field(
-        input_processor=MapCompose(remove_tags, remove_unnecessary_whitespace, remove_enumeration_hotel_name),
-        output_processor=TakeFirst())
-    h_hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
+    h_hotel_name = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                output_processor=TakeFirst())
+    h_hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, score_to_float),
                                  output_processor=TakeFirst())
+    h_hotel_description = scrapy.Field(input_processor=MapCompose(remove_tags),
+                                       output_processor=TakeFirst())
 
 
 class HotelIdReviewIdItem(scrapy.Item):
