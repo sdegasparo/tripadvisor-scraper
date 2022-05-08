@@ -4,6 +4,7 @@ from scrapy.loader import ItemLoader
 from scrapy_splash import SplashRequest
 from scrapy_scrapingbee import ScrapingBeeSpider, ScrapingBeeRequest
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 import time
@@ -28,7 +29,9 @@ class TripadvisorSpider(ScrapingBeeSpider):
         :param url: str
         :return: user_reviews: scrapy response
         """
-        driver = webdriver.Firefox()
+        options = Options
+        options.headless = True
+        driver = webdriver.Firefox(options=options)
         driver.get(url)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         driver.find_element(by=By.CSS_SELECTOR, value='div#content div.cGWLI.Mh.f.j button').click()
