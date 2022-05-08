@@ -119,6 +119,17 @@ def extract_score(score_class):
     return float(score[-2:]) / 10
 
 
+def remove_unnecessary_whitespace(text):
+    """
+    Removes any leading spaces at the beginning and trailing spaces at the end
+    :param text: str
+    :return: text: str
+    >>> remove_unnecessary_whitespace('       Hotel Murtenhof & Krone  ')
+    'Hotel Murtenhof & Krone'
+    """
+    return text.strip()
+
+
 def extract_review_id(review_link):
     """
     Extract review id from review link
@@ -157,17 +168,27 @@ def extract_hotel_id(review_link):
     return re.findall('-d[0-9]+-', review_link)[0][2:-1]
 
 
+def remove_enumeration_hotel_name(hotel_name):
+    """
+    Remove enumeration in hotel name
+
+    :param hotel_name: str
+    :return: hotel name without enumeration: str
+
+    >>> remove_enumeration_hotel_name('23. Belvedere Swiss Quality Hotel')
+    'Belvedere Swiss Quality Hotel'
+    """
+    return re.sub(r'[0-9]+. ', '', hotel_name)
+
+
 class HotelItem(scrapy.Item):
     h_hotel_id = scrapy.Field(input_processor=MapCompose(remove_tags, extract_hotel_id),
                               output_processor=TakeFirst())
-    h_hotel_name = scrapy.Field(input_processor=MapCompose(remove_tags),
-                                output_processor=TakeFirst())
-    h_hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags),
+    h_hotel_name = scrapy.Field(
+        input_processor=MapCompose(remove_tags, remove_unnecessary_whitespace, remove_enumeration_hotel_name),
+        output_processor=TakeFirst())
+    h_hotel_score = scrapy.Field(input_processor=MapCompose(remove_tags, extract_score),
                                  output_processor=TakeFirst())
-    h_hotel_description = scrapy.Field(input_processor=MapCompose(remove_tags),
-                                       output_processor=TakeFirst())
-    h_hotel_number_of_reviews = scrapy.Field(input_processor=MapCompose(remove_tags),
-                                             output_processor=TakeFirst())
 
 
 class HotelIdReviewIdItem(scrapy.Item):
