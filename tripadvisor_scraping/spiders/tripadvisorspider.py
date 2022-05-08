@@ -4,7 +4,6 @@ from scrapy.loader import ItemLoader
 from scrapy_splash import SplashRequest
 from scrapy_scrapingbee import ScrapingBeeSpider, ScrapingBeeRequest
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
 import time
@@ -20,16 +19,8 @@ class TripadvisorSpider(ScrapingBeeSpider):
     # Prod URL Switzerland
     # start_urls = ['https://www.tripadvisor.ch/Hotels-g188045-Switzerland-Hotels.html']
 
-    def __init__(self, fmt, datefmt, *args, **kwargs):
-        super().__init__(fmt, datefmt, *args, **kwargs)
-        options = Options()
-        options.headless = True
-        self.driver = webdriver.Firefox(options=options)
-
-    def __del__(self):
-        self.driver.quit()
-
-    def load_more_reviews(self, url):
+    @staticmethod
+    def load_more_reviews(url):
         """
         Use Selenium to click on load more button.
         Scroll to the bottom of the page to load more reviews, until all reviews are loaded
@@ -37,24 +28,26 @@ class TripadvisorSpider(ScrapingBeeSpider):
         :param url: str
         :return: user_reviews: scrapy response
         """
-        self.driver.get(url)
-        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        self.driver.find_element(by=By.CSS_SELECTOR, value='div#content div.cGWLI.Mh.f.j button').click()
+        driver = webdriver.Firefox()
+        driver.get(url)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        driver.find_element(by=By.CSS_SELECTOR, value='div#content div.cGWLI.Mh.f.j button').click()
 
-        previous_height = self.driver.execute_script('return document.body.scrollHeight')
+        previous_height = driver.execute_script('return document.body.scrollHeight')
         # Scroll to the bottom of the page to load more reviews, until all reviews are loaded
         while True:
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(1)
-            new_height = self.driver.execute_script('return document.body.scrollHeight')
+            new_height = driver.execute_script('return document.body.scrollHeight')
             if new_height == previous_height:
                 break
             else:
                 previous_height = new_height
 
         # Transform the page HTML into a Scrapy response
-        response = scrapy.Selector(text=self.driver.page_source.encode('utf-8'))
+        response = scrapy.Selector(text=driver.page_source.encode('utf-8'))
         user_reviews = response.css('div.eSYSx.ui_card.section')
+        driver.close()
 
         return user_reviews
 
@@ -66,15 +59,15 @@ class TripadvisorSpider(ScrapingBeeSpider):
             h.add_css('h_hotel_score', 'a.ui_bubble_rating::attr(class)')
             yield h.load_item()
 
-        # Go through all hotels on this page
-        hotel_link = hotel.css('div.listing_title a.property_title.prominent::attr(href)').get()
-        if hotel_link is not None:
-            yield response.follow(hotel_link, callback=self.parse_hotel_page)
+            # Go through all hotels on this page
+            hotel_link = hotel.css('div.listing_title a.property_title.prominent::attr(href)').get()
+            if hotel_link is not None:
+                yield response.follow(hotel_link, callback=self.parse_hotel_page)
 
         # Go to next hotel page
-        # next_hotel_page = response.css('a.nav.next.ui_button.primary::attr(href)').get()
-        # if next_hotel_page is not None:
-        #     yield response.follow(next_hotel_page, callback=self.parse)
+        next_hotel_page = response.css('a.nav.next.ui_button.primary::attr(href)').get()
+        if next_hotel_page is not None:
+            yield response.follow(next_hotel_page, callback=self.parse)
 
     def parse_hotel_page(self, response):
         for hotel_review in response.css('div[data-test-target=reviews-tab] div.cWwQK.MC.R2.Gi.z.Z.BB.dXjiy'):
