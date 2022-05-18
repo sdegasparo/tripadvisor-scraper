@@ -61,6 +61,8 @@ class TripadvisorSpider(ScrapingBeeSpider):
             if hotel_link is not None:
                 yield response.follow(hotel_link, callback=self.parse_hotel_page)
 
+            break
+
         # Go to next hotel page
         next_hotel_page = response.css('a.nav.next.ui_button.primary::attr(href)').get()
         if next_hotel_page is not None:
@@ -119,13 +121,14 @@ class TripadvisorSpider(ScrapingBeeSpider):
                     url = 'https://www.tripadvisor.ch' + str(review_page)
                     if review_page is not None:
                         # yield SplashRequest(url=url, callback=self.parse_user_review)
-                        yield ScrapingBeeRequest(url=url, callback=self.parse_user_review)
+                        yield ScrapingBeeRequest(url=url, callback=self.parse_user_review,
+                                                 cb_kwargs=dict(username_id=username_id))
 
-    def parse_user_review(self, response):
+    def parse_user_review(self, response, username_id):
         user_review = response.css('div.review-container')
         helpful_vote = user_review.css('div.helpful span.helpful_text span.numHelp::text').get()
         ur = ItemLoader(item=UserReviewItem(), selector=user_review)
-        ur.add_css('ur_username_id', 'div.member_info div.info_text div::text')
+        ur.add_value('ur_username_id', username_id)
         ur.add_css('ur_review_id', 'div.reviewSelector::attr(data-reviewid)')
         ur.add_css('ur_review_date', 'span.ratingDate::attr(title)')
         ur.add_css('ur_date_of_stay', 'div.prw_rup.prw_reviews_stay_date_hsx::text')
