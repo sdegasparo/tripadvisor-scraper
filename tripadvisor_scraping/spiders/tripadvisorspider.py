@@ -29,7 +29,7 @@ class TripadvisorSpider(ScrapingBeeSpider):
         :param url: str
         :return: user_reviews: scrapy response
         """
-        options = Options
+        options = Options()
         options.headless = True
         driver = webdriver.Firefox(options=options)
         driver.get(url)
