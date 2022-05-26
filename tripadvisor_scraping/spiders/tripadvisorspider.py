@@ -10,7 +10,10 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import csv
+
 import time
+import logging
 
 
 class TripadvisorSpider(ScrapingBeeSpider):
@@ -22,6 +25,56 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     # Prod URL Switzerland
     start_urls = ['https://www.tripadvisor.ch/Hotels-g188045-Switzerland-Hotels.html']
+
+    @staticmethod
+    def get_all_hotel_links(response):
+        # Use Selenium to click on next page button on the hotel site.
+        # Because the next site is loaded dynamic.
+        options = Options()
+        options.headless = False
+        driver = webdriver.Firefox(options=options)
+        driver.get(response.request.url)
+
+        last_page = False
+        hotel_links = []
+
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        try:
+            driver.find_element(by=By.CSS_SELECTOR,
+                                value='div.fUuJf.Gi.Z.B1.BB.P5.Mj.f.j button.fGwNR._G.B-.z._S.c.Wc.ddFHE.eMHQC.brHeh').click()
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        except:
+            pass
+
+        while not last_page:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            # Check if the page is loaded
+            try:
+                loading = EC.invisibility_of_element_located((By.ID, 'taplc_hotels_loading_box_0'))
+                WebDriverWait(driver, 30).until(loading)
+            except TimeoutException:
+                print('No Button')
+
+            # Transform the page HTML into a Scrapy response
+            response_hotel = scrapy.Selector(text=driver.page_source.encode('utf-8'))
+            for hotel in response_hotel.css('div.prw_rup.prw_meta_hsx_responsive_listing.ui_section.listItem'):
+                hotel_link = hotel.css('div.listing_title a.property_title.prominent::attr(href)').get()
+                hotel_links.append(hotel_link)
+
+            # Go to next hotel list page
+            try:
+                driver.find_element(by=By.CSS_SELECTOR,
+                                    value='div.ppr_rup.ppr_priv_main_pagination_bar span.nav.next.ui_button.primary.disabled')
+                print('Button disabled')
+                last_page = True
+            except NoSuchElementException:
+                driver.find_element(by=By.CSS_SELECTOR,
+                                    value='div.ppr_rup.ppr_priv_main_pagination_bar span.nav.next.ui_button.primary').click()
+
+        with open('hotel_links.csv', 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(hotel_links)
 
     @staticmethod
     def load_more_reviews(url):
@@ -58,39 +111,15 @@ class TripadvisorSpider(ScrapingBeeSpider):
         return user_reviews
 
     def parse(self, response):
-        # Use Selenium to click on next page button on the hotel site.
-        # Because the next site is loaded dynamic.
-        options = Options()
-        options.headless = True
-        driver = webdriver.Firefox(options=options)
-        driver.get(response.request.url)
+        # Save all hotel links in a csv file, because Selenium use too much memory when running in parallel
+        # self.get_all_hotel_links(response)
 
-        last_page = False
+        # Load csv file with all hotel links
+        with open('hotel_links.csv') as csvfile:
+            hotel_links = list(csv.reader(csvfile, delimiter=','))
 
-        while not last_page:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            # Check if the page is loaded
-            try:
-                loading = EC.invisibility_of_element_located((By.ID, 'taplc_hotels_loading_box_0'))
-                WebDriverWait(driver, 30).until(loading)
-            except TimeoutException:
-                print('No Button')
-
-            # Transform the page HTML into a Scrapy response
-            response_hotel = scrapy.Selector(text=driver.page_source.encode('utf-8'))
-            for hotel in response_hotel.css('div.prw_rup.prw_meta_hsx_responsive_listing.ui_section.listItem'):
-                hotel_link = hotel.css('div.listing_title a.property_title.prominent::attr(href)').get()
-                yield response.follow(hotel_link, callback=self.parse_hotel_page)
-
-            # Go to next hotel list page
-            try:
-                driver.find_element(by=By.CSS_SELECTOR,
-                                    value='div.ppr_rup.ppr_priv_main_pagination_bar span.nav.next.ui_button.primary.disabled')
-                print('Button disabled')
-                last_page = True
-            except NoSuchElementException:
-                driver.find_element(by=By.CSS_SELECTOR,
-                                    value='div.ppr_rup.ppr_priv_main_pagination_bar span.nav.next.ui_button.primary').click()
+        for hotel_link in hotel_links[0]:
+            yield response.follow(str(hotel_link), callback=self.parse_hotel_page)
 
     def parse_hotel_page(self, response):
         h = ItemLoader(item=HotelItem(), response=response)

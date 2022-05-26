@@ -133,3 +133,6 @@ dmypy.json
 
 # Selenium test file
 click_user.py
+
+# csv files
+*.csv
