@@ -86,11 +86,15 @@ class TripadvisorSpider(ScrapingBeeSpider):
         :return: user_reviews: scrapy response
         """
         options = Options()
-        options.headless = True
+        options.headless = False
         driver = webdriver.Firefox(options=options)
         driver.get(url)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        driver.find_element(by=By.CSS_SELECTOR, value='div#content div.cGWLI.Mh.f.j button').click()
+
+        try:
+            driver.find_element(by=By.CSS_SELECTOR, value='div#content div.cGWLI.Mh.f.j button').click()
+        except:
+            pass
 
         previous_height = driver.execute_script('return document.body.scrollHeight')
         # Scroll to the bottom of the page to load more reviews, until all reviews are loaded
