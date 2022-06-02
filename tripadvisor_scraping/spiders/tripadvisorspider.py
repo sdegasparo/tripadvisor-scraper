@@ -136,9 +136,16 @@ class TripadvisorSpider(ScrapingBeeSpider):
         for hotel_review in response.css('div[data-test-target=reviews-tab] div.cWwQK.MC.R2.Gi.z.Z.BB.dXjiy'):
             # Go to user page
             user_link = hotel_review.css('div.bcaHz a.ui_header_link.bPvDb::attr(href)').get()
-            url = 'https://www.tripadvisor.ch' + str(user_link)
-            yield ScrapingBeeRequest(url=url, callback=self.parse_user_page, cb_kwargs=dict(url=url))
+            user_url = 'https://www.tripadvisor.ch' + str(user_link)
+            yield ScrapingBeeRequest(url=user_url, callback=self.parse_user_page, cb_kwargs=dict(url=user_url))
             # yield SplashRequest(url=url, callback=self.parse_user_page)
+
+            review_link = hotel_review.css('div[data-test-target=review-title] a.fCitC::attr(href)').get()
+            review_url = 'https://www.tripadvisor.ch' + str(review_link)
+            username_id = hotel_review.css(
+                'div[data-test-target=HR_CC_CARD] a.bugwz.I.ui_social_avatar.inline::attr(href)').get().replace('/Profile/', '')
+            yield ScrapingBeeRequest(url=review_url, callback=self.parse_user_review,
+                                     cb_kwargs=dict(username_id=username_id))
 
         # Go to next review page
         next_hotel_review_page = response.css('a.ui_button.nav.next.primary::attr(href)').get()
@@ -155,31 +162,31 @@ class TripadvisorSpider(ScrapingBeeSpider):
         yield u.load_item()
 
         # Check if it has a load more button on the user page
-        load_more_button = response.css(
-            'div.cGWLI.Mh.f.j button.fGwNR._G.B-.z._S.c.Wc.ddFHE.eMHQC.brHeh.bXBfK span.cdYjE.Vm::text').get()
-        if load_more_button is not None:
-            # Use Selenium to click on the load more button and scroll to the bottom
-            user_reviews = self.load_more_reviews(url)
-        else:
-            user_reviews = response.css('div.eSYSx.ui_card.section')
-
-        for user_review in user_reviews:
-            # Check if it's a hotel review
-            ui_icon_class = user_review.css('span.ui_icon.fuEgg::attr(class)').get()
-            if ui_icon_class is not None:
-                if 'hotels' in ui_icon_class:
-
-                    hr = ItemLoader(item=HotelIdReviewIdItem(), selector=user_review)
-                    hr.add_css('hr_hotel_id', 'div.bCnPW.Pd a::attr(href)')
-                    hr.add_css('hr_review_id', 'div.bCnPW.Pd a::attr(href)')
-                    yield hr.load_item()
-
-                    review_page = user_review.css('div.bCnPW.Pd a::attr(href)').get()
-                    url = 'https://www.tripadvisor.ch' + str(review_page)
-                    if review_page is not None:
-                        # yield SplashRequest(url=url, callback=self.parse_user_review)
-                        yield ScrapingBeeRequest(url=url, callback=self.parse_user_review,
-                                                 cb_kwargs=dict(username_id=username_id))
+        # load_more_button = response.css(
+        #     'div.cGWLI.Mh.f.j button.fGwNR._G.B-.z._S.c.Wc.ddFHE.eMHQC.brHeh.bXBfK span.cdYjE.Vm::text').get()
+        # if load_more_button is not None:
+        #     # Use Selenium to click on the load more button and scroll to the bottom
+        #     user_reviews = self.load_more_reviews(url)
+        # else:
+        #     user_reviews = response.css('div.eSYSx.ui_card.section')
+        #
+        # for user_review in user_reviews:
+        #     # Check if it's a hotel review
+        #     ui_icon_class = user_review.css('span.ui_icon.fuEgg::attr(class)').get()
+        #     if ui_icon_class is not None:
+        #         if 'hotels' in ui_icon_class:
+        #
+        #             hr = ItemLoader(item=HotelIdReviewIdItem(), selector=user_review)
+        #             hr.add_css('hr_hotel_id', 'div.bCnPW.Pd a::attr(href)')
+        #             hr.add_css('hr_review_id', 'div.bCnPW.Pd a::attr(href)')
+        #             yield hr.load_item()
+        #
+        #             review_page = user_review.css('div.bCnPW.Pd a::attr(href)').get()
+        #             url = 'https://www.tripadvisor.ch' + str(review_page)
+        #             if review_page is not None:
+        #                 # yield SplashRequest(url=url, callback=self.parse_user_review)
+        #                 yield ScrapingBeeRequest(url=url, callback=self.parse_user_review,
+        #                                          cb_kwargs=dict(username_id=username_id))
 
     def parse_user_review(self, response, username_id):
         user_review = response.css('div.review-container')
