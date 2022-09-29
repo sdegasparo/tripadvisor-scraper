@@ -21,10 +21,10 @@ class TripadvisorSpider(ScrapingBeeSpider):
     name = 'tripadvisor'
 
     # Start URL for scraping
-    start_urls = ['https://www.tripadvisor.ch/']
+    # start_urls = ['https://www.tripadvisor.ch/']
 
     # Extract all Hotel URL Switzerland
-    # start_urls = ['https://www.tripadvisor.ch/Hotels-g188045-Switzerland-Hotels.html']
+    start_urls = ['https://www.tripadvisor.ch/Hotels-g188045-Switzerland-Hotels.html']
 
     @staticmethod
     def get_all_hotel_links(response):
@@ -38,10 +38,11 @@ class TripadvisorSpider(ScrapingBeeSpider):
         last_page = False
         hotel_links = []
 
+        # Click Load More Button
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         try:
             driver.find_element(by=By.CSS_SELECTOR,
-                                value='div.fUuJf.Gi.Z.B1.BB.P5.Mj.f.j button.fGwNR._G.B-.z._S.c.Wc.ddFHE.eMHQC.brHeh').click()
+                                value='div.Gi.Z.B1.BB.P5.Mj.f.j button.rmyCe._G.B-.z._S.c.Wc.wSSLS.pexOo.sOtnj').click()
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         except:
@@ -65,12 +66,12 @@ class TripadvisorSpider(ScrapingBeeSpider):
             # Go to next hotel list page
             try:
                 driver.find_element(by=By.CSS_SELECTOR,
-                                    value='div.ppr_rup.ppr_priv_main_pagination_bar span.nav.next.ui_button.primary.disabled')
+                                    value='div.unified.ui_pagination.standard_pagination.ui_section.listFooter span.nav.next.ui_button.primary.disabled')
                 print('Button disabled')
                 last_page = True
             except NoSuchElementException:
                 driver.find_element(by=By.CSS_SELECTOR,
-                                    value='div.ppr_rup.ppr_priv_main_pagination_bar span.nav.next.ui_button.primary').click()
+                                    value='div.unified.ui_pagination.standard_pagination.ui_section.listFooter span.nav.next.ui_button.primary').click()
 
         with open('hotel_links.csv', 'w') as file:
             writer = csv.writer(file)
@@ -78,14 +79,14 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     def parse(self, response):
         # Save all hotel links in a csv file, because Selenium use too much memory when running in parallel
-        # self.get_all_hotel_links(response)
+        self.get_all_hotel_links(response)
 
         # Load csv file with all hotel links
-        with open('hotel_links.csv') as csvfile:
-            hotel_links = list(csv.reader(csvfile, delimiter=','))
-
-        for hotel_link in hotel_links:
-            yield response.follow(str(hotel_link), callback=self.parse_hotel_page)
+        # with open('hotel_links.csv') as csvfile:
+        #     hotel_links = list(csv.reader(csvfile, delimiter=','))
+        #
+        # for hotel_link in hotel_links:
+        #     yield response.follow(str(hotel_link), callback=self.parse_hotel_page)
 
     def parse_hotel_page(self, response):
         # Get hotel information
