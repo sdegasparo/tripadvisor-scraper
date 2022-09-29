@@ -127,23 +127,23 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     def parse_hotel_page(self, response):
         h = ItemLoader(item=HotelItem(), response=response)
-        h.add_css('h_hotel_id', 'div.badtN a::attr(href)')
-        h.add_css('h_hotel_name', 'h1.fkWsC.b.d.Pn::text')
-        h.add_css('h_hotel_score', 'div.bSlOX.P span.bvcwU.P::text')
-        h.add_css('h_hotel_description', 'div.duhwe._T.bOlcm.bWqJN.Ci.dMbup div.pIRBV._T::text')
+        h.add_css('h_hotel_id', 'div.lDMPR._m div.woPbY a::attr(href)')
+        h.add_css('h_hotel_name', 'h1.QdLfr.b.d.Pn::text')
+        h.add_css('h_hotel_score', 'div.chGvF.P span.IHSLZ.P::text')
+        h.add_css('h_hotel_description', 'div._T.FKffI.IGtbc.Ci.oYqEM.Ps.Z.BB div.fIrGe._T::text')
         yield h.load_item()
 
-        for hotel_review in response.css('div[data-test-target=reviews-tab] div.cWwQK.MC.R2.Gi.z.Z.BB.dXjiy'):
+        for hotel_review in response.css('div[data-test-target=reviews-tab]'):
             # Go to user page
-            user_link = hotel_review.css('div.bcaHz a.ui_header_link.bPvDb::attr(href)').get()
+            user_link = hotel_review.css('div.cRVSd a.ui_header_link.uyyBf::attr(href)').get()
             user_url = 'https://www.tripadvisor.ch' + str(user_link)
             yield ScrapingBeeRequest(url=user_url, callback=self.parse_user_page, cb_kwargs=dict(url=user_url))
             # yield SplashRequest(url=url, callback=self.parse_user_page)
 
-            review_link = hotel_review.css('div[data-test-target=review-title] a.fCitC::attr(href)').get()
+            review_link = hotel_review.css('div[data-test-target=review-title] a.Qwuub::attr(href)').get()
             review_url = 'https://www.tripadvisor.ch' + str(review_link)
             username_id = hotel_review.css(
-                'div[data-test-target=HR_CC_CARD] a.bugwz.I.ui_social_avatar.inline::attr(href)').get().replace('/Profile/', '')
+                'div[data-test-target=HR_CC_CARD] a.kjIqZ.I.ui_social_avatar.inline::attr(href)').get().replace('/Profile/', '')
             yield ScrapingBeeRequest(url=review_url, callback=self.parse_user_review,
                                      cb_kwargs=dict(username_id=username_id))
 
@@ -153,12 +153,13 @@ class TripadvisorSpider(ScrapingBeeSpider):
             yield response.follow(next_hotel_review_page, callback=self.parse_hotel_page)
 
     def parse_user_page(self, response, url):
-        username_id = response.css('div.dGTGf.f.K.MD span.mDiUf._R::text').get()
-        user_info = response.css('div.duHGF.MD.ui_card.section')
+        username_id = response.css('span.ecLBS._R.shSnD span.Dsdjn._R::text').get()
+        user_info = response.css('div.MD.ui_card.section')
+        user_register_date = response.css('span.ECVao._R.H3::text').extract()[1]
         u = ItemLoader(item=UserItem(), selector=user_info)
         u.add_value('u_username_id', username_id)
-        u.add_css('u_user_location', 'span.fIKCp._R.S4.H3.ShLyt.default::text')
-        u.add_css('u_user_register_date', 'span.dspcc._R.H3::text')
+        u.add_css('u_user_location', 'span.PacFI._R.S4.H3.LXUOn.default::text')
+        u.add_value('u_user_register_date', user_register_date)
         yield u.load_item()
 
         # Check if it has a load more button on the user page
@@ -191,6 +192,7 @@ class TripadvisorSpider(ScrapingBeeSpider):
     def parse_user_review(self, response, username_id):
         user_review = response.css('div.review-container')
         helpful_vote = user_review.css('div.helpful span.helpful_text span.numHelp::text').get()
+        review_text = ' '.join(user_review.css('div.prw_rup.prw_reviews_resp_sur_review_text span.fullText::text').extract())
         ur = ItemLoader(item=UserReviewItem(), selector=user_review)
         ur.add_value('ur_username_id', username_id)
         ur.add_css('ur_review_id', 'div.reviewSelector::attr(data-reviewid)')
@@ -198,7 +200,7 @@ class TripadvisorSpider(ScrapingBeeSpider):
         ur.add_css('ur_date_of_stay', 'div.prw_rup.prw_reviews_stay_date_hsx::text')
         ur.add_css('ur_review_score', 'span.ui_bubble_rating::attr(class)')
         ur.add_css('ur_review_title', 'h1.title::text')
-        ur.add_css('ur_review_text', 'div.prw_rup.prw_reviews_resp_sur_review_text span.fullText::text')
+        ur.add_value('ur_review_text', review_text)
 
         if helpful_vote is not None:
             ur.add_value('ur_review_helpful_vote', int(helpful_vote[0]))
