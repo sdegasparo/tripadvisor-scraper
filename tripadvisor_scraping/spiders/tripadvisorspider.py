@@ -21,10 +21,10 @@ class TripadvisorSpider(ScrapingBeeSpider):
     name = 'tripadvisor'
 
     # Start URL for scraping
-    # start_urls = ['https://www.tripadvisor.ch/']
+    start_urls = ['https://www.tripadvisor.ch/']
 
     # Extract all Hotel URL Switzerland
-    start_urls = ['https://www.tripadvisor.ch/Hotels-g188045-Switzerland-Hotels.html']
+    # start_urls = ['https://www.tripadvisor.ch/Hotels-g188045-Switzerland-Hotels.html']
 
     @staticmethod
     def get_all_hotel_links(response):
@@ -79,25 +79,26 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     def parse(self, response):
         # Save all hotel links in a csv file, because Selenium use too much memory when running in parallel
-        self.get_all_hotel_links(response)
+        # self.get_all_hotel_links(response)
 
         # Load csv file with all hotel links
-        # with open('hotel_links.csv') as csvfile:
-        #     hotel_links = list(csv.reader(csvfile, delimiter=','))
-        #
-        # for hotel_link in hotel_links:
-        #     yield response.follow(str(hotel_link), callback=self.parse_hotel_page)
+        with open('test.csv') as csvfile:
+            hotel_links = list(csv.reader(csvfile, delimiter=','))
 
-    def parse_hotel_page(self, response):
-        # Get hotel information
-        h = ItemLoader(item=HotelItem(), response=response)
-        h.add_css('h_hotel_id', 'div.lDMPR._m div.woPbY a::attr(href)')
-        h.add_css('h_hotel_name', 'h1.QdLfr.b.d.Pn::text')
-        h.add_css('h_hotel_score', 'div.chGvF.P span.IHSLZ.P::text')
-        h.add_css('h_hotel_description', 'div._T.FKffI.IGtbc.Ci.oYqEM.Ps.Z.BB div.fIrGe._T::text')
-        yield h.load_item()
+        for hotel_link in hotel_links[0]:
+            yield response.follow(str(hotel_link), callback=self.parse_hotel_page, cb_kwargs=dict(next_page=False))
 
-        for hotel_review in response.css('div[data-test-target=HR_CC_CARD]'):
+    def parse_hotel_page(self, response, next_page):
+        if not next_page:
+            # Get hotel information
+            h = ItemLoader(item=HotelItem(), response=response)
+            h.add_css('h_hotel_id', 'div.lDMPR._m div.woPbY a::attr(href)')
+            h.add_css('h_hotel_name', 'h1.QdLfr.b.d.Pn::text')
+            h.add_css('h_hotel_score', 'div.grdwI.P span.uwJeR.P::text')
+            h.add_css('h_hotel_description', 'div._T.FKffI.IGtbc.Ci.oYqEM.Ps.Z.BB div.fIrGe._T::text')
+            yield h.load_item()
+
+        for hotel_review in response.css('div[data-test-target=reviews-tab] div[data-test-target=HR_CC_CARD]'):
             # Get hotel_id and review_id
             hr = ItemLoader(item=HotelIdReviewIdItem(), selector=hotel_review)
             hr.add_css('hr_hotel_id', 'div[data-test-target=review-title] a.Qwuub::attr(href)')
@@ -120,7 +121,7 @@ class TripadvisorSpider(ScrapingBeeSpider):
         # Go to next review page
         next_hotel_review_page = response.css('a.ui_button.nav.next.primary::attr(href)').get()
         if next_hotel_review_page is not None:
-            yield response.follow(next_hotel_review_page, callback=self.parse_hotel_page)
+            yield response.follow(next_hotel_review_page, callback=self.parse_hotel_page, cb_kwargs=dict(next_page=True))
 
     def parse_user_page(self, response, url):
         # Get user information
@@ -135,8 +136,8 @@ class TripadvisorSpider(ScrapingBeeSpider):
 
     def parse_user_review(self, response, username_id):
         # Get review information
-        user_review = response.css('div.review-container')
-        helpful_vote = user_review.css('div.helpful span.helpful_text span.numHelp::text').get()
+        user_review = response.css('div.featured-review-container')
+        helpful_vote = user_review.css('div.featured-review-container div.helpful span.helpful_text span.numHelp::text').get()
         review_text = ' '.join(user_review.css('div.prw_rup.prw_reviews_resp_sur_review_text span.fullText::text').extract())
         ur = ItemLoader(item=UserReviewItem(), selector=user_review)
         ur.add_value('ur_username_id', username_id)
