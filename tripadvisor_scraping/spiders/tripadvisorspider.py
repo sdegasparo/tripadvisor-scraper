@@ -82,7 +82,7 @@ class TripadvisorSpider(ScrapingBeeSpider):
         # self.get_all_hotel_links(response)
 
         # Load csv file with all hotel links
-        with open('test.csv') as csvfile:
+        with open('hotel_links.csv') as csvfile:
             hotel_links = list(csv.reader(csvfile, delimiter=','))
 
         for hotel_link in hotel_links[0]:
@@ -91,11 +91,13 @@ class TripadvisorSpider(ScrapingBeeSpider):
     def parse_hotel_page(self, response, next_page):
         if not next_page:
             # Get hotel information
+            hotel_description_2 = response.css('div.ssr-init-26f::attr(data-ssrev-handlers)').extract()
             h = ItemLoader(item=HotelItem(), response=response)
             h.add_css('h_hotel_id', 'div.lDMPR._m div.woPbY a::attr(href)')
             h.add_css('h_hotel_name', 'h1.QdLfr.b.d.Pn::text')
             h.add_css('h_hotel_score', 'div.grdwI.P span.uwJeR.P::text')
             h.add_css('h_hotel_description', 'div._T.FKffI.IGtbc.Ci.oYqEM.Ps.Z.BB div.fIrGe._T::text')
+            h.add_value('h_hotel_description_2', hotel_description_2)
             yield h.load_item()
 
         for hotel_review in response.css('div[data-test-target=reviews-tab] div[data-test-target=HR_CC_CARD]'):

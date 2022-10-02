@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d01b8d19-a83c-4f34-9802-8c4438e88d5f" name="Changes" comment="">
+    <list default="true" id="d01b8d19-a83c-4f34-9802-8c4438e88d5f" name="Changes" comment="Check if the hotel information has already been scraped. CSS selector fixed, so that only the reviews are looped. helpful vote corrected.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tripadvisor_scraping/items.py" beforeDir="false" afterPath="$PROJECT_DIR$/tripadvisor_scraping/items.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tripadvisor_scraping/spiders/tripadvisorspider.py" beforeDir="false" afterPath="$PROJECT_DIR$/tripadvisor_scraping/spiders/tripadvisorspider.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -126,6 +127,14 @@
       <option name="presentableId" value="Default" />
       <updated>1647515563973</updated>
     </task>
+    <task id="LOCAL-00001" summary="Check if the hotel information has already been scraped. CSS selector fixed, so that only the reviews are looped. helpful vote corrected.">
+      <created>1664701106185</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1664701106185</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -141,5 +150,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Check if the hotel information has already been scraped. CSS selector fixed, so that only the reviews are looped. helpful vote corrected." />
+    <option name="LAST_COMMIT_MESSAGE" value="Check if the hotel information has already been scraped. CSS selector fixed, so that only the reviews are looped. helpful vote corrected." />
   </component>
 </project>
